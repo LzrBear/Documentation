@@ -17,8 +17,62 @@ Note: SPNs must be unique, i.e. a user may have multiple SPNs but an SPN should 
 ## Delegation
 Note: The delegation tab will not be available until an SPN for the user has been created.
 
+## Adding a machine to the AD (For Devs)
+When adding a server to the AD the DNS on that machine must be set to the IP address of the AD machine in order for it to resolve workstation names.
+
+### Windows
+#### Setting DNS Details:
+1. Open Control Panel\Network and Internet\Network and Sharing Center
+2. Select Change Adapter Settings
+3. Right Click on the relevant adapter and select properties
+4. Select Internet Protocol Version 4
+5. Click Properties
+6. Select User the following DNS Server addresses
+7. Set the DNS to the IP of the AD machine
+8. Select Ok on all open dialogs.
+
+#### Adding a Server to AD:
+1. Go to Control Panel\System and Security\System
+2. Select Advanced System Settings
+3. Select the Computer Name tab and select the change button
+4. Set Member of to Domain and add the domain name
+5. Select ok on all open dialogs and restart the machine as necessary
+
+### Linux
+#### Setting DNS Details:
+
+```
+sudo nano /etc/resolv.conf
+```
+
+Add the following lines
+
+```
+nameserver 192.168.1.24
+```
+where 192.168.1.24 is the IP address of your AD machine
+
+#### Adding a Server to AD:
+install the following
+``` 
+sudo apt-get install sssd realmd samba-common-bin samba-dsdb-modules adcli
+```
+
+run the following command to add to AD
+```
+realm join --install=/ --user=administrator DOMAIN.LOCAL --verbose
+```
+where ```administrator``` is an administrator in the AD and ```DOMAIN.LOCAL``` is the realm
 
 # Glassfish
+
+## krb5-user
+This will add the kinit and klist commands to a linux (debian) machine
+
+```
+sudo apt-get update
+sudo apt-get install krb5-user
+```
 
 ## SPNEGO
 
@@ -199,6 +253,20 @@ spnego-server {
 For futher details on the Krb5LoginModule parameters see: https://docs.oracle.com/javase/7/docs/jre/api/security/jaas/spec/com/sun/security/auth/module/Krb5LoginModule.html
 
 
+# Workstation
+
+In order for a browser in windows to send the Kerberos token to a server the following changes must be made.
+
+1. Go to internet options -> security -> local intranet -> sites
+2. Click the Advanced button
+3. Add the root url of the glassfish server to the zone. e.g. http://win-d9l9n7ep4fs
+4. Click close then click okay
+5. Select the Advanced tab
+6. Scroll to the security section at the bottom
+7. Ensure "Enable Integrated Windows Authentication" is checked, if not check it.
+8. Click Okay to close the dialog. (restart the workstation if you changed "Enable Integrated Windows Authentication")
+
+If doing this for all workstations on the AD, make sure these changes are set in group policy and propagated down.
 
 # Tools
 
@@ -206,7 +274,8 @@ For futher details on the Krb5LoginModule parameters see: https://docs.oracle.co
 ## kinit
 
 # Troubleshooting
-## hash doesn't match?
+
+## krb5 checksum failed
 try running kinit on the webserver to clear any outdated tickets???
 
 # References.
@@ -214,3 +283,11 @@ try running kinit on the webserver to clear any outdated tickets???
 2. https://docs.bmc.com/docs/decisionsupportserverautomation/85/locating-active-directory-kdcs-350325160.html
 3. https://stackoverflow.com/questions/3686420/servlet-filter-url-mapping
 4. https://docs.oracle.com/javase/7/docs/jre/api/security/jaas/spec/com/sun/security/auth/module/Krb5LoginModule.html
+5. https://support.rackspace.com/how-to/changing-dns-settings-on-linux/
+
+
+https://community.spiceworks.com/how_to/144319-join-debian-to-ad
+
+https://lists.freedesktop.org/archives/authentication/2016-April/000343.html
+
+https://www.raspberrypi.org/forums/viewtopic.php?t=98948
