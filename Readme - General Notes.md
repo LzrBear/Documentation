@@ -111,6 +111,33 @@ grant SELECT on GROUPS to PUBLIC;
 
 ```
 
+### Getting last run queries
+This query will return the last run queries for the user named read.
+```sql
+SELECT            
+ S.LAST_ACTIVE_TIME,     
+ S.MODULE,
+ S.SQL_FULLTEXT, 
+ S.SQL_PROFILE,
+ S.EXECUTIONS,
+ S.LAST_LOAD_TIME,
+ S.PARSING_USER_ID,
+ S.SERVICE                                                                       
+FROM
+ SYS.V_$SQL S, 
+ SYS.ALL_USERS U
+WHERE
+ S.PARSING_USER_ID=U.USER_ID 
+ AND UPPER(U.USERNAME) IN UPPER('read')   
+ORDER BY TO_DATE(S.LAST_LOAD_TIME, 'YYYY-MM-DD/HH24:MI:SS') desc;
+```
+
+### Unlocking an account
+The following query will unlock the read account.
+```sql
+ALTER USER read IDENTIFIED BY only ACCOUNT UNLOCK;
+```
+
 # JAVA notes
 ## Manifest
 TIP: When creating a manifest file make sure the last line is a new line, otherwise the line above will not be added to the manifest.
